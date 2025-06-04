@@ -1,4 +1,4 @@
-require("dotenv").config({path: 'etc/secrets/.env'}); // ⬅️ Імпорт .env
+require("dotenv").config(); // або: { path: 'etc/secrets/.env' } — тільки якщо ти справді зберігаєш ключі не в корені
 
 const express = require("express");
 const cors = require("cors");
@@ -6,21 +6,24 @@ const admin = require("firebase-admin");
 
 const app = express();
 
-// 🔐 Ініціалізація Firebase через змінну середовища
+// 🔐 Ініціалізація Firebase через SERVICE_ACCOUNT_KEY з .env
 const serviceAccountJSON = process.env.SERVICE_ACCOUNT_KEY;
 
 if (!serviceAccountJSON) {
-    console.error("❌ SERVICE_ACCOUNT_KEY не задана!");
+    console.error("❌ Змінна середовища SERVICE_ACCOUNT_KEY відсутня!");
     process.exit(1);
 }
 
 let serviceAccount;
 
 try {
-    serviceAccount = JSON.parse(serviceAccountJSON);
+    // 🔧 FIX: перетворюємо \\n в справжні \n
+    serviceAccount = JSON.parse(serviceAccountJSON.replace(/\\n/g, '\n'));
+
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
     });
+
     console.log("✅ Firebase успішно ініціалізовано");
 } catch (error) {
     console.error("❌ Помилка ініціалізації Firebase:", error);
