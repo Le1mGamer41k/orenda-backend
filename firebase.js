@@ -1,27 +1,23 @@
 const admin = require('firebase-admin');
-const path = require('path');
-const fs = require('fs');
 
-// 🔍 Повний шлях до ключа
-const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
+// 🔐 Отримуємо ключ із змінної середовища
+const serviceAccountJSON = process.env.FIREBASE_SERVICE_ACCOUNT;
 
-// 🔐 Перевіряємо, чи існує файл
-if (!fs.existsSync(serviceAccountPath)) {
-    console.error("❌ serviceAccountKey.json не знайдено! Перевір шлях.");
-    throw new Error("serviceAccountKey.json is missing");
+if (!serviceAccountJSON) {
+    console.error("❌ Змінна FIREBASE_SERVICE_ACCOUNT не задана в середовищі");
+    throw new Error("FIREBASE_SERVICE_ACCOUNT is missing");
 }
 
 let serviceAccount;
 
 try {
-    // 🧾 Імпортуємо JSON з ключем
-    serviceAccount = require(serviceAccountPath);
+    serviceAccount = JSON.parse(serviceAccountJSON);
 } catch (error) {
-    console.error("❌ Помилка при читанні serviceAccountKey.json:", error);
+    console.error("❌ Помилка парсингу JSON ключа:", error);
     throw error;
 }
 
-// ✅ Ініціалізація Firebase Admin SDK
+// ✅ Ініціалізація Firebase Admin
 try {
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
@@ -32,6 +28,5 @@ try {
     throw error;
 }
 
-// 🛠️ Експортуємо Firestore
 const db = admin.firestore();
 module.exports = { db };
