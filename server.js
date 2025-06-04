@@ -60,7 +60,7 @@ app.get("/api/reviews", async (req, res) => {
 });
 
 // ❌ Якщо маршрут не знайдено
-app.use('/.*/', (req, res) => {
+app.use(/.*/, (req, res) => {
     console.warn(`🚫 Невідомий маршрут: ${req.method} ${req.originalUrl}`);
     res.status(404).json({ error: "Маршрут не знайдено" });
 });
