@@ -1,19 +1,44 @@
+require("dotenv").config({path: 'etc/secrets/.env'}); // ⬅️ Імпорт .env
+
 const express = require("express");
 const cors = require("cors");
-const { db } = require("./firebase");
+const admin = require("firebase-admin");
 
 const app = express();
 
-// 🔧 Middleware
+// 🔐 Ініціалізація Firebase через змінну середовища
+const serviceAccountJSON = process.env.SERVICE_ACCOUNT_KEY;
+
+if (!serviceAccountJSON) {
+    console.error("❌ SERVICE_ACCOUNT_KEY не задана!");
+    process.exit(1);
+}
+
+let serviceAccount;
+
+try {
+    serviceAccount = JSON.parse(serviceAccountJSON);
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+    });
+    console.log("✅ Firebase успішно ініціалізовано");
+} catch (error) {
+    console.error("❌ Помилка ініціалізації Firebase:", error);
+    process.exit(1);
+}
+
+const db = admin.firestore();
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// ✅ Health-check (важливо для Render!)
+// Health-check
 app.get("/", (req, res) => {
     res.send("🎉 Backend is running!");
 });
 
-// 📥 POST: Додати новий відгук
+// POST: Додати відгук
 app.post("/api/reviews", async (req, res) => {
     const { Gmail, Review, apartmentId } = req.body;
 
@@ -36,7 +61,7 @@ app.post("/api/reviews", async (req, res) => {
     }
 });
 
-// 📤 GET: Отримати відгуки з пагінацією
+// GET: Отримати відгуки
 app.get("/api/reviews", async (req, res) => {
     const { flatId = "", page = 1 } = req.query;
     const pageSize = 10;
@@ -59,13 +84,13 @@ app.get("/api/reviews", async (req, res) => {
     }
 });
 
-// ❌ Якщо маршрут не знайдено
+// Обробка 404
 app.use(/.*/, (req, res) => {
     console.warn(`🚫 Невідомий маршрут: ${req.method} ${req.originalUrl}`);
     res.status(404).json({ error: "Маршрут не знайдено" });
 });
 
-// 🚀 Запуск сервера
+// Запуск сервера
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
     console.log(`✅ Сервер запущено на порту ${PORT}`);
