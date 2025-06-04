@@ -60,7 +60,7 @@ app.get("/api/reviews", async (req, res) => {
 });
 
 // ❌ Якщо маршрут не знайдено
-app.use("*", (req, res) => {
+app.use(/.*/, (req, res) => {
     res.status(404).json({ error: "Маршрут не знайдено" });
 });
 
